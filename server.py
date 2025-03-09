@@ -32,7 +32,7 @@ async def hello():
     return {"message": "Hello, world!"}
 
 @app.post("/predict")
-async def predict_depth(file: UploadFile = File(...)):
+async def predict_depth(file: UploadFile = File(...)  ):
     try:
         logging.info(f"Received file: {file.filename}")
         
