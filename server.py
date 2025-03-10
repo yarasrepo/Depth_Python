@@ -23,19 +23,15 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-# **Depth Scaling Factor (Needs Calibration)**
-CALIBRATION_FACTOR = 2.5  # Adjust this based on real measurements
-
 @app.get("/")
 async def hello():
-    print("hello")
     return {"message": "Hello, world!"}
 
 @app.post("/predict")
 async def predict_depth(file: UploadFile = File(...)):
     try:
         logging.info(f"Received file: {file.filename}")
-        
+
         # Read and process the image
         image = Image.open(BytesIO(await file.read())).convert("RGB")
 
@@ -49,16 +45,25 @@ async def predict_depth(file: UploadFile = File(...)):
         # Convert depth map to numpy array
         depth_map = depth_map.squeeze().cpu().numpy()
 
-        # Select the center pixel's depth value
+        # Calculate the average depth value across the image
+        avg_depth = np.mean(depth_map)
+
+        # Automatic calibration based on average depth value (heuristics-based)
+        # The closer to the camera, the lower the depth values should be. 
+        # We'll use the average depth to estimate a calibration factor.
+
+        # Heuristic calibration factor: Adjust based on the typical depth value
+        calibration_factor = 1.0 / avg_depth
+
+        # Calculate the depth at the center pixel
         height, width = depth_map.shape
         center_pixel_depth = depth_map[height // 2, width // 2]
 
-        # Convert depth to real-world distance using calibration factor
-        real_distance = CALIBRATION_FACTOR / center_pixel_depth
+        # Convert depth to real-world distance using the dynamic calibration factor
+        real_distance = calibration_factor * center_pixel_depth
 
         logging.info(f"Estimated real-world distance: {real_distance:.2f} meters")
 
-        # Fix JSON serialization issue
         return JSONResponse(content={"estimated_distance_meters": float(real_distance)})
 
     except Exception as e:
