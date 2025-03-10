@@ -48,9 +48,7 @@ async def predict_depth(file: UploadFile = File(...)):
         # Calculate the average depth value across the image
         avg_depth = np.mean(depth_map)
 
-        # Automatic calibration based on average depth value (heuristics-based)
-        # The closer to the camera, the lower the depth values should be. 
-        # We'll use the average depth to estimate a calibration factor.
+      
 
         # Heuristic calibration factor: Adjust based on the typical depth value
         calibration_factor = 1.0 / avg_depth
