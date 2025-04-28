@@ -1,2 +1,5 @@
 .venv
 yolov_env
+__pycache__/
+# assets/
+venv
