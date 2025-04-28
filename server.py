@@ -63,9 +63,9 @@ async def predict_depth(file: UploadFile = File(...)):
         h, w = depth_map.shape
         center_pixel_depth = depth_map[h // 2, w // 2]
         real_distance = calibration_factor * center_pixel_depth
-        logging.info(f"Real distance: {real_distance:.2f} m")
+        logging.info(f"Real distance: {center_pixel_depth:.2f} cm")
 
-        if real_distance < 1.5:
+        if center_pixel_depth < 1500:
         # === Object Detection ===
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=pil_to_ndarray(image))
             results = mp_detector.detect(mp_image)
@@ -84,7 +84,7 @@ async def predict_depth(file: UploadFile = File(...)):
 
                     logging.info(f"→ {category.category_name} ({category.score:.2f})")
 
-                    if x1 <= center_x <= x2 and y1 <= center_y <= y2:
+                    if (x1 <= center_x <= x2) and (y1 <= center_y <= y2) and (category.score > 0.6):
                         object_in_front = {
                             "label": category.category_name,
                             "confidence": float(category.score),
@@ -104,7 +104,7 @@ async def predict_depth(file: UploadFile = File(...)):
                     }
                 else:
                     alert = {
-                        "alert_type": "surface",
+                        "alert_type": "object",
                         "distance": float(center_pixel_depth)
                     }
             else:
